@@ -37,6 +37,7 @@ let userIdInDisplayFrame = null;
 
 let expandVideoFrame = (e) => {
   let child = displayFrame.children[0];
+  console.log({v: e.currentTarget})
   if (child) {
     document.getElementById('streams__container').appendChild(child);
   }
