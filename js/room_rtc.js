@@ -7,7 +7,12 @@ if (!uid) {
 }
 
 let token = null;
+// video calling client
 let client;
+
+// Real time messagin client and channel
+let rtmClient;
+let channel;
 
 // Get room Id from URL
 const queryString = window.location.search;
@@ -30,6 +35,7 @@ let localScreenTracks;
 let sharingScreen = false;
 
 let joinRoomInit = async () => {
+  await joinMessagingChannel();
   // create agora client
   // The `Codec` encodes and compresses, then decodes and decompresses the data that makes up your video.
   client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -40,6 +46,29 @@ let joinRoomInit = async () => {
   client.on('user-left', handleUserLeft);
 
   joinStream();
+};
+
+let joinMessagingChannel = async () => {
+  // Create a real time messaging client with Agora
+  rtmClient = await AgoraRTM.createInstance(APP_ID);
+  await rtmClient.login({ uid, token });
+
+  // add name attribute to channel
+  await rtmClient.addOrUpdateLocalUserAttributes({ 'name': displayName });
+
+  channel = await rtmClient.createChannel(roomId);
+  await channel.join();
+
+  channel.on('MemberJoined', handleMemberJoined);
+  channel.on('MemberLeft', handleMemberLeft);
+  channel.on('ChannelMessage', handleChannelMessage);
+
+  // Get all members from channel and add it to DOM.
+  getMembers();
+
+  // Trigger a bot message
+  addBotMessageToDom(`Welcome to the room, Don't be shy, say hello!`)
+  addBotMessageToDom(`Welcome to the room ${displayName}! 👋`)
 };
 
 // Join stream as presenter
